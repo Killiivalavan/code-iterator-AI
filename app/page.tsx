@@ -5,7 +5,7 @@ import CodeIterator from '@/components/CodeIterator';
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col cursor-ui">
+    <main className="min-h-screen flex flex-col cursor-ui h-screen">
       {/* Cursor-like header */}
       <header className="bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center">
         <div className="flex items-center">
@@ -19,7 +19,7 @@ export default function Home() {
             <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
             <span>Connected to API</span>
           </div>
-          <a href="https://github.com/your-username/code-iterator-ai" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+          <a href="https://github.com/Killiivalavan/code-iterator-AI" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
             GitHub
           </a>
           <a href="#" className="hover:text-white transition-colors">
@@ -28,11 +28,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main content */}
-      <div className="flex-grow overflow-hidden bg-gradient-to-b from-gray-900 to-gray-950">
-        <div className="h-full max-w-7xl mx-auto p-4">
-          <CodeIterator />
-        </div>
+      {/* Main content - Make sure this takes up all available space */}
+      <div className="flex-grow overflow-hidden bg-gradient-to-b from-gray-900 to-gray-950 h-[calc(100vh-64px)]">
+        <CodeIterator />
       </div>
 
       {/* Footer */}

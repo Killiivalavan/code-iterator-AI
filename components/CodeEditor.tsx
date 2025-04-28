@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, forwardRef, useState } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, forwardRef, useState } from 'react';
 import Editor, { Monaco } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 import * as Diff from 'diff';
@@ -13,6 +13,7 @@ interface CodeEditorProps {
   modifiedCode?: string;
   showDiff?: boolean;
   onAcceptChanges?: () => void;
+  mergedDiffMode?: boolean;
 }
 
 interface EditorRefType {
@@ -29,13 +30,44 @@ const CodeEditor = forwardRef<EditorRefType, CodeEditorProps>(({
   readonly = false,
   modifiedCode,
   showDiff = false,
-  onAcceptChanges
+  onAcceptChanges,
+  mergedDiffMode = false,
 }, ref) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decorationsRef = useRef<string[]>([]);
   const [diffStats, setDiffStats] = useState<{added: number, removed: number}>({ added: 0, removed: 0 });
   const [hasChanges, setHasChanges] = useState<boolean>(false);
+
+  // Merged diff view logic
+  let mergedCode = code;
+  let mergedLineMeta: { type: 'added' | 'removed' | 'unchanged', text: string }[] = [];
+  if (showDiff && mergedDiffMode) {
+    // Compute merged diff
+    const diffResult = Diff.diffLines((modifiedCode ?? ''), (code ?? ''));
+    mergedCode = '';
+    mergedLineMeta = [];
+    diffResult.forEach(part => {
+      const lines = part.value.split('\n');
+      // Remove trailing empty line from split
+      if (lines[lines.length - 1] === '') lines.pop();
+      lines.forEach(line => {
+        if (part.added) {
+          mergedCode += line + '\n';
+          mergedLineMeta.push({ type: 'added', text: line });
+        } else if (part.removed) {
+          // Ghost line for removed
+          mergedCode += line + '\n';
+          mergedLineMeta.push({ type: 'removed', text: line });
+        } else {
+          mergedCode += line + '\n';
+          mergedLineMeta.push({ type: 'unchanged', text: line });
+        }
+      });
+    });
+    // Remove trailing newline
+    if (mergedCode.endsWith('\n')) mergedCode = mergedCode.slice(0, -1);
+  }
 
   // Callback function for when the Monaco editor is mounted
   const handleEditorDidMount = (editor: editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -85,7 +117,7 @@ const CodeEditor = forwardRef<EditorRefType, CodeEditorProps>(({
   const options: editor.IStandaloneEditorConstructionOptions = {
     selectOnLineNumbers: true,
     roundedSelection: true,
-    readOnly: readonly || showDiff,
+    readOnly: true === (showDiff && mergedDiffMode) ? true : readonly,
     cursorStyle: 'line',
     automaticLayout: true,
     minimap: {
@@ -100,13 +132,47 @@ const CodeEditor = forwardRef<EditorRefType, CodeEditorProps>(({
   };
 
   // Improved diff highlighting with both line and character level diffs
-  useEffect(() => {
-    if (!showDiff || !modifiedCode || !editorRef.current || !monacoRef.current) return;
+  useLayoutEffect(() => {
+    if (!showDiff || !editorRef.current || !monacoRef.current) return;
+    // If mergedDiffMode, use mergedLineMeta for decorations
+    if (showDiff && mergedDiffMode && mergedLineMeta.length > 0) {
+      setTimeout(() => {
+        const decorations: editor.IModelDeltaDecoration[] = [];
+        const monaco = monacoRef.current;
+        const editor = editorRef.current;
+        if (!monaco || !editor) return;
+        const model = editor.getModel();
+        if (!model) return;
+        mergedLineMeta.forEach((meta, idx) => {
+          if (meta.type === 'added') {
+            decorations.push({
+              range: new monaco.Range(idx + 1, 1, idx + 1, 1),
+              options: {
+                isWholeLine: true,
+                className: 'editor-diff-added',
+                hoverMessage: { value: 'Added' },
+              },
+            });
+          } else if (meta.type === 'removed') {
+            decorations.push({
+              range: new monaco.Range(idx + 1, 1, idx + 1, 1),
+              options: {
+                isWholeLine: true,
+                className: 'editor-diff-removed',
+                hoverMessage: { value: 'Removed' },
+              },
+            });
+          }
+        });
+        decorationsRef.current = editor.deltaDecorations(decorationsRef.current, decorations);
+      }, 0);
+      return;
+    }
     
     console.log('Diff detection running with:', {
       originalLength: code.length,
-      modifiedLength: modifiedCode.length,
-      areIdentical: code.trim() === modifiedCode.trim()
+      modifiedLength: modifiedCode?.length || 0,
+      areIdentical: code.trim() === modifiedCode?.trim()
     });
     
     // FORCE DIFFERENT CODE CHECK - If we have both code and modified code, show the diff regardless
@@ -136,7 +202,7 @@ const CodeEditor = forwardRef<EditorRefType, CodeEditorProps>(({
     let removedLines = 0;
     
     // First use line-level diff to identify changed lines
-    const diffResult = Diff.diffLines(code, modifiedCode);
+    const diffResult = Diff.diffLines(code ?? '', modifiedCode ?? '');
     console.log('Diff result:', diffResult);
     
     let hasAnyChanges = false;
@@ -193,7 +259,7 @@ const CodeEditor = forwardRef<EditorRefType, CodeEditorProps>(({
     if (hasAnyChanges) {
       // Try to find matching lines and highlight specific character changes
       const origLines = code.split('\n');
-      const modLines = modifiedCode.split('\n');
+      const modLines = modifiedCode?.split('\n') || [];
       
       console.log('Looking for character-level changes between lines');
       
@@ -254,7 +320,7 @@ const CodeEditor = forwardRef<EditorRefType, CodeEditorProps>(({
     setHasChanges(hasAnyChanges);
     console.log('Diff stats:', { addedLines, removedLines, hasAnyChanges });
     
-  }, [code, modifiedCode, showDiff]);
+  }, [showDiff, mergedDiffMode, mergedCode]);
 
   // Method to programmatically select text between lines
   const selectLines = (startLine: number, endLine: number) => {
@@ -328,9 +394,9 @@ const CodeEditor = forwardRef<EditorRefType, CodeEditorProps>(({
       <Editor
         height={height}
         language={language}
-        value={showDiff ? modifiedCode : code}
+        value={showDiff && mergedDiffMode && mergedCode !== code ? mergedCode : code}
         options={options}
-        onChange={onChange}
+        onChange={showDiff && mergedDiffMode ? undefined : onChange}
         onMount={handleEditorDidMount}
         theme="vs-dark"
         className="monaco-editor"

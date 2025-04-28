@@ -312,7 +312,7 @@ const CodeIterator: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 cursor-ui">
+    <div className="h-full">
       {/* Notification Toast */}
       {notification && (
         <div className={`cursor-notification ${notification.type === 'success' ? 'bg-green-800' : notification.type === 'error' ? 'bg-red-800' : 'bg-blue-800'}`}>
@@ -320,123 +320,88 @@ const CodeIterator: React.FC = () => {
         </div>
       )}
 
-      {/* Main Header */}
-      <div className="cursor-toolbar justify-between">
-        <h2 className="text-lg font-medium">Code Iterator AI</h2>
-        
-        <div className="flex items-center gap-4">
-          <div className="flex items-center">
-            <label htmlFor="language-select" className="mr-2 text-xs">Language:</label>
-            <select
-              id="language-select"
-              value={language}
-              onChange={handleLanguageChange}
-              className="bg-editor text-white rounded-md border border-gray-700 px-2 py-1 text-xs"
-            >
-              {LANGUAGE_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          {/* Model toggle switch */}
-          <div className="flex items-center">
-            <span className={`text-xs mr-2 ${!useGroq ? 'text-blue-400 font-medium' : 'text-gray-400'}`}>Ollama</span>
-            <div 
-              className={`relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer ${useGroq ? 'bg-blue-600' : 'bg-gray-600'}`}
-              onClick={handleModelToggle}
-            >
-              <div 
-                className={`absolute top-0.5 left-0.5 w-4 h-4 transition duration-200 ease-in-out transform bg-white rounded-full ${useGroq ? 'translate-x-5' : ''}`}
-              ></div>
+      {/* New Cursor-like Layout with 2/3 - 1/3 split */}
+      <div className="flex h-full min-h-0"> {/* min-h-0 is important for flex children to shrink properly */}
+        {/* Left side: Code Editor Area (2/3) */}
+        <div className="w-2/3 h-full flex flex-col border-r border-gray-700 min-h-0">
+          <div className="cursor-toolbar justify-between">
+            <div className="flex items-center">
+              <h2 className="text-sm font-medium">Code Editor</h2>
+              <div className="ml-4 flex items-center">
+                <label htmlFor="language-select" className="mr-2 text-xs">Language:</label>
+                <select
+                  id="language-select"
+                  value={language}
+                  onChange={handleLanguageChange}
+                  className="bg-editor text-white rounded-md border border-gray-700 px-2 py-1 text-xs"
+                >
+                  {LANGUAGE_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <span className={`text-xs ml-2 ${useGroq ? 'text-blue-400 font-medium' : 'text-gray-400'}`}>Groq</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Main Code Editor - Takes up 2/3 of the space on larger screens */}
-        <div className="md:col-span-2">
-          <div className="cursor-toolbar mb-2">
-            <h3 className="text-md font-medium">Your Code</h3>
+            
             {showDiff && isSuccess && (
-              <div className="flex gap-2 ml-auto">
+              <div className="flex gap-2">
                 <button
                   onClick={toggleDiffHighlighting}
-                  className={`cursor-button ${showDiffHighlighting ? 'cursor-button-primary' : ''}`}
+                  className={`cursor-button text-xs px-2 py-1 ${showDiffHighlighting ? 'cursor-button-primary' : ''}`}
                 >
                   {showDiffHighlighting ? "Hide Diff" : "Show Diff"}
                 </button>
                 
                 <button
                   onClick={toggleSideBySideDiff}
-                  className={`cursor-button ${showSideBySideDiff ? 'cursor-button-primary' : ''}`}
+                  className={`cursor-button text-xs px-2 py-1 ${showSideBySideDiff ? 'cursor-button-primary' : ''}`}
                 >
                   {showSideBySideDiff ? "Editor View" : "Side-by-Side"}
                 </button>
                 
-                {!showSideBySideDiff && (
-                  <button
-                    onClick={toggleCodeView}
-                    className="cursor-button"
-                  >
-                    {viewOriginalCode ? "Show Modified" : "Show Original"}
-                  </button>
-                )}
+                <button
+                  onClick={toggleCodeView}
+                  className="cursor-button text-xs px-2 py-1"
+                >
+                  {viewOriginalCode ? "Show Modified" : "Show Original"}
+                </button>
               </div>
             )}
           </div>
           
-          {/* Use either the CodeEditor or DiffView based on user preference */}
-          {showDiff && isSuccess && showSideBySideDiff ? (
-            <DiffView 
-              originalCode={code}
-              modifiedCode={modifiedCode}
-              language={language}
-              height="500px"
-              onAcceptChanges={() => {
-                console.log("Accepting changes from DiffView side-by-side mode");
-                handleIntegrateCode();
-              }}
-            />
-          ) : (
-            <div className={showDiff && isSuccess ? "grid grid-cols-1 md:grid-cols-2 gap-4" : ""}>
-              <CodeEditor 
-                ref={editorRef}
-                code={showDiff && isSuccess ? code : code} 
-                onChange={(value: string | undefined) => setCode(value || '')} 
-                onSelectionChange={handleSelectionChange}
-                height="500px"
+          {/* Main Code Editor - Takes up full height */}
+          <div className="flex-1 min-h-0 flex flex-col">
+            {showDiff && isSuccess && showSideBySideDiff ? (
+              <DiffView 
+                originalCode={code}
+                modifiedCode={modifiedCode}
                 language={language}
-                showDiff={false}
-                readonly={showDiff && isSuccess}
+                height="100%"
+                onAcceptChanges={() => {
+                  handleIntegrateCode();
+                }}
               />
-              
-              {showDiff && isSuccess && (
-                <div className="flex flex-col">
-                  <CodeEditor 
-                    code={modifiedCode} 
-                    onChange={() => {}} 
-                    height="500px"
-                    language={language}
-                    showDiff={false}
-                  />
-                  <button
-                    onClick={handleIntegrateCode}
-                    className="mt-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded"
-                  >
-                    Apply Changes
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+            ) : (
+              <div className="flex-1 min-h-0">
+                <CodeEditor 
+                  ref={editorRef}
+                  code={showDiff && isSuccess && !showSideBySideDiff ? modifiedCode : code} 
+                  onChange={(value: string | undefined) => setCode(value || '')} 
+                  onSelectionChange={handleSelectionChange}
+                  height="calc(100vh - 120px)"
+                  language={language}
+                  showDiff={showDiff && isSuccess && !showSideBySideDiff}
+                  modifiedCode={showDiff && isSuccess && !showSideBySideDiff ? code : undefined}
+                  readonly={false}
+                  mergedDiffMode={showDiff && isSuccess && !showSideBySideDiff}
+                />
+              </div>
+            )}
+          </div>
           
           {selectedCode && (
-            <div className="p-2 bg-gray-700 rounded text-xs text-white mt-2 flex justify-between items-center">
+            <div className="p-2 bg-gray-700 text-xs text-white flex justify-between items-center">
               <div>
                 <span className="font-semibold">Selected:</span> Lines {selectedCode.startLine}-{selectedCode.endLine}
               </div>
@@ -448,60 +413,93 @@ const CodeIterator: React.FC = () => {
               </button>
             </div>
           )}
-        </div>
-        
-        {/* Instruction and explanation panel - Takes up 1/3 of the space */}
-        <div className="flex flex-col gap-4">
-          <div>
-            <div className="cursor-toolbar mb-2">
-              <h3 className="text-md font-medium">Instructions</h3>
-            </div>
-            <textarea
-              className="w-full h-24 p-3 bg-editor text-white rounded-md border border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-              placeholder={selectedCode 
-                ? `Describe what changes you want to make to the selected code (lines ${selectedCode.startLine}-${selectedCode.endLine})...` 
-                : "Describe what changes you want to make to the code..."}
-              value={instruction}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInstruction(e.target.value)}
-            />
-          </div>
-
-          {error && (
-            <div className="text-red-500 mt-1 text-sm">{error}</div>
-          )}
-
-          <button
-            className="px-6 py-2 bg-primary text-white font-medium rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </div>
-            ) : `Submit to AI (${useGroq ? 'Groq' : 'Ollama'})`}
-          </button>
           
-          {explanation && (
-            <div className="mt-4">
-              <div className="cursor-toolbar mb-2">
-                <h4 className="text-md font-medium">AI Explanation</h4>
+          {showDiff && isSuccess && !showSideBySideDiff && (
+            <div className="p-2 bg-gray-800 border-t border-gray-700">
+              <button
+                onClick={handleIntegrateCode}
+                className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded"
+              >
+                Apply Changes
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right side: AI Tools Panel (1/3) */}
+        <div className="w-1/3 h-full flex flex-col overflow-auto bg-gray-900">
+          <div className="cursor-toolbar justify-between">
+            <h2 className="text-sm font-medium">AI Assistant</h2>
+            
+            {/* Model toggle */}
+            <div className="flex items-center text-xs">
+              <span className={`mr-1 ${!useGroq ? 'text-blue-400 font-medium' : 'text-gray-400'}`}>Ollama</span>
+              <div 
+                className={`relative inline-block w-8 h-4 transition duration-200 ease-in-out rounded-full cursor-pointer ${useGroq ? 'bg-blue-600' : 'bg-gray-600'}`}
+                onClick={handleModelToggle}
+              >
+                <div 
+                  className={`absolute top-0.5 left-0.5 w-3 h-3 transition duration-200 ease-in-out transform bg-white rounded-full ${useGroq ? 'translate-x-4' : ''}`}
+                ></div>
+              </div>
+              <span className={`ml-1 ${useGroq ? 'text-blue-400 font-medium' : 'text-gray-400'}`}>Groq</span>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-3 p-3 overflow-y-auto h-full">
+            {/* Instruction area */}
+            <div className="mb-2">
+              <label className="block text-xs font-medium mb-1 text-gray-300">Instructions</label>
+              <textarea
+                className="w-full h-32 p-2 bg-editor text-white rounded-md border border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none text-sm"
+                placeholder={selectedCode 
+                  ? `Describe what changes you want to make to the selected code (lines ${selectedCode.startLine}-${selectedCode.endLine})...` 
+                  : "Describe what changes you want to make to the code..."}
+                value={instruction}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInstruction(e.target.value)}
+              />
+            </div>
+
+            {error && (
+              <div className="text-red-500 text-xs">{error}</div>
+            )}
+
+            {/* Simple Submit button */}
+            <button
+              className="px-4 py-1.5 bg-primary text-white text-sm rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full max-w-xs self-center"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </div>
+              ) : "Submit"}
+            </button>
+            
+            {/* Explanation area */}
+            {explanation && (
+              <div className="mt-2 flex-1 overflow-y-auto">
+                <div className="text-xs font-medium mb-1 text-gray-300">AI Explanation</div>
+                <div className="cursor-explanation text-sm overflow-auto max-h-[calc(100vh-380px)]">
+                  {renderExplanation()}
+                </div>
+                
                 {showDiff && isSuccess && (
                   <button 
                     onClick={handleIntegrateCode}
-                    className="cursor-button cursor-button-success ml-auto"
+                    className="mt-3 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded w-full"
                   >
                     Apply Changes
                   </button>
                 )}
               </div>
-              <div className="cursor-explanation">{renderExplanation()}</div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
