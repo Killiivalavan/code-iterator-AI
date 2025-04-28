@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 30, 41, 59;
+  --background-end-rgb: 17, 24, 39;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb))
+    )
+    fixed;
+}
+
+.monaco-editor {
+  padding: 10px 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Diff highlighting styles */
+.editor-diff-added {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  border-left: 3px solid rgb(16, 185, 129) !important;
+  position: relative;
+}
+
+.editor-diff-added::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent);
+  pointer-events: none;
+}
+
+.editor-diff-removed {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-left: 3px solid rgb(239, 68, 68) !important;
+  position: relative;
+}
+
+.editor-diff-added-gutter::before {
+  content: "+";
+  color: rgb(16, 185, 129);
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.editor-diff-removed-gutter::before {
+  content: "-";
+  color: rgb(239, 68, 68);
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.editor-diff-added-glyph {
+  background-color: rgb(16, 185, 129);
+  border-radius: 50%;
+  margin-left: 5px;
+}
+
+.editor-diff-removed-inline {
+  color: rgb(239, 68, 68) !important;
+  font-style: italic;
+  opacity: 0.8;
+  margin: 0.5em 0;
+  display: block;
+  background-color: rgba(239, 68, 68, 0.1);
+  padding: 4px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.editor-diff-char-added {
+  background-color: rgba(16, 185, 129, 0.4) !important;
+  border-radius: 2px;
+  text-decoration: underline wavy rgb(16, 185, 129);
+}
+
+.diff-add {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.diff-remove {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Cursor-style tooltips */
+.cursor-tooltip {
+  position: absolute;
+  background-color: #1e293b;
+  color: white;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  pointer-events: none;
+  max-width: 300px;
+  white-space: pre-wrap;
+}
+
+.cursor-tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #1e293b;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.monaco-diff-editor .diff-review-line-number {
+  text-align: right;
+  padding-right: 10px;
+}
+
+/* Custom scrollbar for the app */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1E293B;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748B;
+}
+
+/* Cursor-like UI styles */
+.cursor-ui {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.cursor-toolbar {
+  display: flex;
+  align-items: center;
+  background-color: #1e293b;
+  border-bottom: 1px solid #374151;
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+.cursor-button {
+  padding: 4px 10px;
+  background-color: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cursor-button:hover {
+  background-color: #4a5568;
+}
+
+.cursor-button-primary {
+  background-color: #3b82f6;
+}
+
+.cursor-button-primary:hover {
+  background-color: #2563eb;
+}
+
+.cursor-button-success {
+  background-color: #10b981;
+}
+
+.cursor-button-success:hover {
+  background-color: #059669;
+}
+
+.cursor-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background-color: #4b5563;
+  color: white;
+}
+
+.cursor-explanation {
+  background-color: #1e293b;
+  border-radius: 6px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cursor-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #1e293b;
+  border-radius: 6px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-width: 300px;
+  animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+} 
